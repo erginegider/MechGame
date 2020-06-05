@@ -22,6 +22,7 @@
 #include "Ability/GameplayAbilityBase.h"
 #include "HealthBarUserWidget.h"
 #include "Net/UnrealNetwork.h"
+#include "AIController.h"
 
 
 ////#define print(x)  GEngine->AddOnScreenDebugMessage(-1,8.0f,FColor::Green,x)
@@ -118,6 +119,9 @@ void AMechGameCharacter::BeginPlay()
 			
 			
 		}
+
+	
+	
 		
 	}
 	
@@ -207,14 +211,45 @@ UAbilitySystemComponent * AMechGameCharacter::GetAbilitySystemComponent() const
 void AMechGameCharacter::PossessedBy(AController * Newcontroller)
 {
 	Super::PossessedBy(Newcontroller);
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	}
-	SetOwner(Newcontroller);
-
 
 	
+	//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("InitAbilityActorInfo"));
+	//SetOwner(Newcontroller);
+	ReSetupInput();
+	if (AbilitySystemComponent)
+	{
+			AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		//AbilitySystemComponent->RefreshAbilityActorInfo();
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("New Controller is ...: "), *Newcontroller->GetName()));
+	}
+	
+}
+
+void AMechGameCharacter::InitAbilityActorInfo(AActor * InOwnerActor, AActor * InAvatarActor)
+{
+	AbilitySystemComponent->InitAbilityActorInfo(InOwnerActor, InAvatarActor);
+}
+
+
+void AMechGameCharacter::ReSetupInput_Implementation()
+{
+	InputComponent = CreatePlayerInputComponent();
+	
+	if (InputComponent)
+	{
+		SetupPlayerInputComponent(InputComponent);
+		InputComponent->RegisterComponent();
+	}
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->InitAbilityActorInfo(this,this);
+	//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("ReSetup Occured..... !! "));
+	FGameplayAbilityInputBinds  bindinfo(FString("ConfirmInput"), FString("CancelInput"), "EMechAbilityInput", static_cast<int32>(EMechAbilityInput::ConfirmInput), static_cast<int32>(EMechAbilityInput::CancelInput));
+	AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, bindinfo);
+}
+
+void AMechGameCharacter::SetupInput()
+{
+	SetupPlayerInputComponent(InputComponent);
 }
 
 void AMechGameCharacter::OnResetVR()

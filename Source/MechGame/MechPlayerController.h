@@ -22,6 +22,8 @@ public:
 
 	AMechPlayerController();
 
+	
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_Clicked(AMechGameCharacter *selectedpawn);
 	void Server_Clicked_Implementation(AMechGameCharacter *selectedpawn);
@@ -46,5 +48,11 @@ public:
 
 	UFUNCTION()
 	virtual void AcknowledgePossession(class APawn* P) override;
+
+	UFUNCTION()
+	virtual void ClientRestart_Implementation(class APawn* NewPawn) override;
+
+	UFUNCTION()
+	virtual void OnUnPossess() override;
 
 };

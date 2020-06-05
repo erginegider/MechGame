@@ -13,7 +13,7 @@ void UMyUserWidget::NativeConstruct()
 	{
 		if (ItemTitle)
 		{
-			FText NameText = FText::FromString(TEXT("ERGIN DUZU"));
+			FText NameText = FText::FromString(TEXT(""));
 			ItemTitle->SetText(NameText);
 		}
 

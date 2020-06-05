@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "MechGame.h"
 #include "Ability/FEffectContainer.h"
+
 #include "MechGameCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnHealthChanged, float, NewHealth);
@@ -68,7 +69,23 @@ public:
 	UFUNCTION()
 	virtual void PossessedBy(AController *Newcontroller) override;
 
+
+	UFUNCTION(NetMulticast,reliable,Category="AbilityInput")
+	void ReSetupInput();
+
+
+	UFUNCTION(BlueprintCallable,Category = "AbilityInput")
+	void InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
 	FOnPawnHealthChanged OnPawnHealthChanged;
+
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ability)
+	class AController *myAIController;
+
+	UFUNCTION()
+	void SetupInput();
 
 protected:
 

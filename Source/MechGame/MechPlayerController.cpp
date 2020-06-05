@@ -23,7 +23,24 @@ AMechPlayerController::AMechPlayerController()
 	{
 		DefaultPawn = PlayerPawnBPClass.Class;
 	}
+	
 }
+
+
+
+
+
+void AMechPlayerController::ClientRestart_Implementation(class APawn* NewPawn)
+{
+	Super::ClientRestart_Implementation(NewPawn);
+	AMechGameCharacter *myPawn = Cast<AMechGameCharacter>(NewPawn);
+	if (myPawn)
+	{
+		//myPawn->InitAbilityActorInfo(myPawn, myPawn);
+		myPawn->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
+	}
+}
+
 
 
 void AMechPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -81,10 +98,20 @@ TSubclassOf<APawn> AMechPlayerController::GetDefaultPawn()
 void AMechPlayerController::AcknowledgePossession(APawn * P)
 {
 	Super::AcknowledgePossession(P);
+	bAutoManageActiveCameraTarget = true;
 	AMechGameCharacter * myCharacter = Cast<AMechGameCharacter>(P);
 	if (myCharacter)
 	{
 		myCharacter->GetAbilitySystemComponent()->InitAbilityActorInfo(myCharacter, myCharacter);
+		
 	}
+	
+}
+
+
+void AMechPlayerController::OnUnPossess()
+{
+	bAutoManageActiveCameraTarget = false;
+	Super::OnUnPossess();
 
 }
