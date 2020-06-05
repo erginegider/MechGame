@@ -36,7 +36,7 @@ void AMechPlayerController::ClientRestart_Implementation(class APawn* NewPawn)
 	AMechGameCharacter *myPawn = Cast<AMechGameCharacter>(NewPawn);
 	if (myPawn)
 	{
-		//myPawn->InitAbilityActorInfo(myPawn, myPawn);
+	
 		myPawn->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
 	}
 }

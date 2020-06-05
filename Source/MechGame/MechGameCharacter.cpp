@@ -22,6 +22,7 @@
 #include "Ability/GameplayAbilityBase.h"
 #include "HealthBarUserWidget.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemComponent/MechAbilitySystemComponent.h"
 #include "AIController.h"
 
 
@@ -90,17 +91,17 @@ AMechGameCharacter::AMechGameCharacter()
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 	GetCapsuleComponent()->OnClicked.AddUniqueDynamic(this, &AMechGameCharacter::Clicked);
 
-	AbilitySystemComponent->SetIsReplicated(true);
+	
 }
 
 void AMechGameCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	UAbilitySystemGlobals::Get().InitGlobalData();
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
 	
 	
-	UAbilitySystemGlobals::Get().InitGlobalData();
+	
 	if (HasAuthority() && AbilitySystemComponent)
 	{
 		for (auto& Ability : AbilityMap)
@@ -179,6 +180,7 @@ void AMechGameCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	{
 		FGameplayAbilityInputBinds  bindinfo(FString("ConfirmInput"), FString("CancelInput"), "EMechAbilityInput", static_cast<int32>(EMechAbilityInput::ConfirmInput), static_cast<int32>(EMechAbilityInput::CancelInput));
 		AbilitySystemComponent->BindAbilityActivationToInputComponent(PlayerInputComponent, bindinfo);
+		
 		IsBound = true;
 	}
 }
