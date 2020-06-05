@@ -31,9 +31,16 @@ public:
 	ATTRIBUTE_ACCESSORS(UMechAttributeSet, Health)
 
 
+
+	UPROPERTY(BlueprintReadOnly, Category = "AbilitySets")
+	FGameplayAttributeData Damage;
+	ATTRIBUTE_ACCESSORS(UMechAttributeSet, Damage)
+
+
 	UFUNCTION()
 	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);
 
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void PreAttributeChange(const FGameplayAttribute & Attribute, float & NewValue) override;
 	
 };

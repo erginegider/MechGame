@@ -13,5 +13,9 @@ UCLASS()
 class MECHGAME_API ULifeStealGE_ExecutionCalculation : public UGameplayEffectExecutionCalculation
 {
 	GENERATED_BODY()
-	
+public:
+
+	ULifeStealGE_ExecutionCalculation();
+
+	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, OUT FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 };
