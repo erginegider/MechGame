@@ -215,10 +215,7 @@ UAbilitySystemComponent * AMechGameCharacter::GetAbilitySystemComponent() const
 
 void AMechGameCharacter::PossessedBy(AController * Newcontroller)
 {
-	Super::PossessedBy(Newcontroller);
-
-	// ReSetup Input Bindings
-	ReSetupInput();
+	Super::PossessedBy(Newcontroller);	
 
 	// ReInit the AbilitySystem AbilityActor Info incase
 	if (AbilitySystemComponent)

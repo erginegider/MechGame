@@ -34,7 +34,6 @@ void UMechAttributeSet::OnRep_Armor(const FGameplayAttributeData & OldArmor)
 }
 
 
-
 void UMechAttributeSet::OnRep_DamageRatio(const FGameplayAttributeData & OldDamageRatio)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, DamageRatio, OldDamageRatio);
