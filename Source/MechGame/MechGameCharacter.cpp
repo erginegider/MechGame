@@ -25,16 +25,6 @@
 #include "AIController.h"
 
 
-////#define print(x)  GEngine->AddOnScreenDebugMessage(-1,8.0f,FColor::Green,x)
-//#define prints(x)  GEngine->AddOnScreenDebugMessage(-1,8.0f,FColor::Green,FString::Printf(TEXT("%s"),x))
-//#define printn(x)  GEngine->AddOnScreenDebugMessage(-1,8.0f,FColor::Green,FString::Printf(TEXT("%i"),x))
-
-//////////////////////////////////////////////////////////////////////////
-// AMechGameCharacter
-
-
-
-
 AMechGameCharacter::AMechGameCharacter()
 {
 	// Set size for collision capsule
@@ -75,12 +65,20 @@ AMechGameCharacter::AMechGameCharacter()
 	HealthComponent->UpdateWidget();
 	HealthComponent->SetIsReplicated(true);
 
-	
+	///////////////////////////////////
+	/* ABILITYSYSTEM INITIALIZATION */
+	//////////////////////////////////
+
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	AbilitySystemComponent->SetIsReplicated(true);
 	
 	MechAttributeSet = CreateDefaultSubobject<UMechAttributeSet>(TEXT("AttributeSet"));
+
+
+	///////////////////////////////////
+	/* ABILITYSYSTEM INITIALIZATION */
+	//////////////////////////////////
 
 	
 	IsBound = false;
@@ -96,11 +94,14 @@ AMechGameCharacter::AMechGameCharacter()
 void AMechGameCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+
+	//Init the AbilitySystemComponent for the first time in BeginPlay
 	UAbilitySystemGlobals::Get().InitGlobalData();
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
 	
 	
-	
+	// First Ability Colllection gets granted here to character all the passive and active ones... Only On Server
 	if (HasAuthority() && AbilitySystemComponent)
 	{
 		for (auto& Ability : AbilityMap)
@@ -115,36 +116,42 @@ void AMechGameCharacter::BeginPlay()
 			{
 			
 				FGameplayAbilitySpecHandle PassiveAbilityHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(*PassiveAbility, 1));
-			}
-			
-			
-		}
-
-	
-	
-		
+			}					
+		}		
 	}
-	
 
-	MyWidgetInstance = Cast<UHealthBarUserWidget>(HealthComponent->GetUserWidgetObject());	
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetHealthAttribute()).AddUObject(MyWidgetInstance, &UHealthBarUserWidget::UpdateHealth);
-	InitWidgetData();
+	//Get the Widget Instance above the Player...
+	PlayerHeadHUD = Cast<UHealthBarUserWidget>(HealthComponent->GetUserWidgetObject());	
 
+	//Bind the widget function to Attributeset's change delegates
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetHealthAttribute()).AddUObject(PlayerHeadHUD, &UHealthBarUserWidget::UpdateHealth);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetArmorAttribute()).AddUObject(PlayerHeadHUD, &UHealthBarUserWidget::UpdateArmor);
 
+	//We just read from Initial Values form Attribute Set and Fire the AttributeSets Change Broadcast Events
+	InitOnPlayerWidgetDataForBeginPlay();
+
+	//Apply First Initialization Effect for all the Attributes...
 	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
-	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(InitHealthEffect, 1, EffectContext);
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(InitAttributeSetEffect, 1, EffectContext);
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 
+	// Force the component for first replication
 	AbilitySystemComponent->ForceReplication();
-	
+
 }
 
-void AMechGameCharacter::InitWidgetData()
+
+// This function only updates first instance of on player widget for it to show correct attribute values
+void AMechGameCharacter::InitOnPlayerWidgetDataForBeginPlay()
 {
 	FOnAttributeChangeData HealthInitData;
 	HealthInitData.NewValue = MechAttributeSet->GetHealth();
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetHealthAttribute()).Broadcast(HealthInitData);
+
+	FOnAttributeChangeData ArmorInitData;
+	ArmorInitData.NewValue = MechAttributeSet->GetArmor();
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetArmorAttribute()).Broadcast(ArmorInitData);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -175,7 +182,7 @@ void AMechGameCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AMechGameCharacter::OnResetVR);
 	
-	if (/*HasAuthority() && */!IsBound)
+	if (!IsBound)
 	{
 		FGameplayAbilityInputBinds  bindinfo(FString("ConfirmInput"), FString("CancelInput"), "EMechAbilityInput", static_cast<int32>(EMechAbilityInput::ConfirmInput), static_cast<int32>(EMechAbilityInput::CancelInput));
 		AbilitySystemComponent->BindAbilityActivationToInputComponent(PlayerInputComponent, bindinfo);
@@ -184,7 +191,7 @@ void AMechGameCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	}
 }
 
-
+//When this character is selected in the lobby
 void AMechGameCharacter::Clicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
 	AMechGameCharacter *MyPawn = Cast<AMechGameCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -197,14 +204,11 @@ void AMechGameCharacter::Clicked(UPrimitiveComponent* TouchedComponent, FKey But
 	{
 		GetWorld()->ServerTravel("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap");
 	}
-	
 
 }
 
 UAbilitySystemComponent * AMechGameCharacter::GetAbilitySystemComponent() const
 {
-
-
 	return AbilitySystemComponent;
 }
 
@@ -213,25 +217,28 @@ void AMechGameCharacter::PossessedBy(AController * Newcontroller)
 {
 	Super::PossessedBy(Newcontroller);
 
-	
-	//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("InitAbilityActorInfo"));
-	//SetOwner(Newcontroller);
+	// ReSetup Input Bindings
 	ReSetupInput();
+
+	// ReInit the AbilitySystem AbilityActor Info incase
 	if (AbilitySystemComponent)
 	{
 			AbilitySystemComponent->InitAbilityActorInfo(this, this);
-		//AbilitySystemComponent->RefreshAbilityActorInfo();
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("New Controller is ...: "), *Newcontroller->GetName()));
+		
 	}
 	
 }
 
+
+//Outside callable function for us for abilitysystemcomponent initialization
 void AMechGameCharacter::InitAbilityActorInfo(AActor * InOwnerActor, AActor * InAvatarActor)
 {
 	AbilitySystemComponent->InitAbilityActorInfo(InOwnerActor, InAvatarActor);
 }
 
 
+
+//Resetup the input bindings for abilitysystemcomponents
 void AMechGameCharacter::ReSetupInput_Implementation()
 {
 	InputComponent = CreatePlayerInputComponent();
@@ -313,5 +320,5 @@ void AMechGameCharacter::MoveRight(float Value)
 
 void AMechGameCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AMechGameCharacter, MyWidgetInstance);
+	DOREPLIFETIME(AMechGameCharacter, PlayerHeadHUD);
 }

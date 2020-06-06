@@ -11,6 +11,7 @@
 #include "MechGameCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnHealthChanged, float, NewHealth);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnArmorChanged, float, NewArmor);
 
 UCLASS(config=Game)
 class AMechGameCharacter : public ACharacter, public IAbilitySystemInterface
@@ -32,7 +33,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	void InitWidgetData();
+	void InitOnPlayerWidgetDataForBeginPlay();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* HealthComponent;
@@ -64,7 +65,7 @@ public:
 	TArray<TSubclassOf<class UGameplayAbilityBase>> PassiveAbilityList;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GE")
-	TSubclassOf<class UGameplayEffect> InitHealthEffect;
+	TSubclassOf<class UGameplayEffect> InitAttributeSetEffect;
 
 	UFUNCTION()
 	virtual void PossessedBy(AController *Newcontroller) override;
@@ -77,12 +78,15 @@ public:
 	UFUNCTION(BlueprintCallable,Category = "AbilityInput")
 	void InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability")
-	FOnPawnHealthChanged OnPawnHealthChanged;
+	
+	FOnPawnHealthChanged OnPawnHealthChanged; // fired from attributset
+
+
+	FOnPawnArmorChanged OnPawnArmorChanged;  // fired from....
 
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ability)
-	class AController *myAIController;
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ability)
+	class AController *myAIController;*/
 
 	UFUNCTION()
 	void SetupInput();
@@ -90,7 +94,7 @@ public:
 protected:
 
 	UPROPERTY(Replicated)
-	class UHealthBarUserWidget *MyWidgetInstance;
+	class UHealthBarUserWidget *PlayerHeadHUD;
 
 	class TSubclassOf<class UUserWidget> HealthWidgetClass;
 	/** Resets HMD orientation in VR. */

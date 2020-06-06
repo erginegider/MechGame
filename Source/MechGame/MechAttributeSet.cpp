@@ -19,6 +19,8 @@ void UMechAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, Health, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, Armor, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, DamageRatio, COND_None, REPNOTIFY_Always);
 }
 
 void UMechAttributeSet::OnRep_Health(const FGameplayAttributeData & OldHealth)
@@ -26,6 +28,17 @@ void UMechAttributeSet::OnRep_Health(const FGameplayAttributeData & OldHealth)
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, Health, OldHealth);
 }
 
+void UMechAttributeSet::OnRep_Armor(const FGameplayAttributeData & OldArmor)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, Armor, OldArmor);
+}
+
+
+
+void UMechAttributeSet::OnRep_DamageRatio(const FGameplayAttributeData & OldDamageRatio)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, DamageRatio, OldDamageRatio);
+}
 
 void UMechAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData & Data)
 {
@@ -80,13 +93,32 @@ void UMechAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 				HitResult = *Context.GetHitResult();
 			}
 
-			const float localdamage = GetDamage();
+			float localdamage = GetDamage();
+			float localhealth = GetHealth();
+			float localarmor = GetArmor();
+
 			SetDamage(0.0f);
+			UE_LOG(LogTemp, Warning, TEXT("Damage RAW...: %f      Damage Ratio......: %f       Damage Final....: %f"),localdamage,GetDamageRatio(),localdamage*GetDamageRatio());
+			localdamage = localdamage * GetDamageRatio();
 
+			if (localdamage <= localarmor)
+			{
+				localarmor = localarmor - localdamage;
+			}
+			else
+			{
+				float damageportion = localdamage - localarmor;
+				localarmor = 0;
+				localhealth = localhealth - damageportion;
 
-			const float localhealth = GetHealth();
-			UE_LOG(LogTemp, Warning, TEXT("AttributeSet localdamage....:%f      localhealth....:%f"), localdamage, localhealth);
-			SetHealth(localhealth-localdamage);
+			}
+
+			UE_LOG(LogTemp, Warning, TEXT("Final Health...: %f   Final Armor.....:%f "), localhealth,localarmor);
+			const float finalhealth = localhealth;
+
+			SetHealth(finalhealth);
+			SetArmor(localarmor);
+
 			SourceCharacter->OnPawnHealthChanged.Broadcast(GetHealth());
 		}
 	} // If Damage Close ??
@@ -118,6 +150,15 @@ void UMechAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 						
 					}				
 
+				}
+
+
+				if (Attribute == GetArmorAttribute())
+				{
+					if (OwningCharacter->OnPawnArmorChanged.IsBound())
+					{
+						OwningCharacter->OnPawnArmorChanged.Broadcast(GetArmor());
+					}
 				}
 			}
 			else UE_LOG(LogAbilitySystem, Warning, TEXT("No Owning Player Controller"));

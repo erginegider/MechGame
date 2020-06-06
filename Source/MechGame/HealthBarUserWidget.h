@@ -20,8 +20,13 @@ public:
 	class UTextBlock *HealthBar;
 	
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	class UTextBlock *ArmorBar;
+
 	virtual void NativeConstruct() override;
 
 	
 	void UpdateHealth(const  FOnAttributeChangeData& NewHealth);
+
+	void UpdateArmor(const  FOnAttributeChangeData& NewArmor);
 };

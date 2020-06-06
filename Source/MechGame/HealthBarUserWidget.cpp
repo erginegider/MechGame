@@ -21,3 +21,12 @@ void UHealthBarUserWidget::UpdateHealth(const FOnAttributeChangeData& NewHealth)
 	
 	HealthBar->SetText(Health);
 }
+
+void UHealthBarUserWidget::UpdateArmor(const FOnAttributeChangeData & NewArmor)
+{
+
+	float NewArmorValue = NewArmor.NewValue;
+	FText Armor = FText::FromString(FString::SanitizeFloat(NewArmorValue));
+
+	ArmorBar->SetText(Armor);
+}
