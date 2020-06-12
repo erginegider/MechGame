@@ -11,6 +11,8 @@
 #include "AbilitySystemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "Sound/SoundAttenuation.h"
+
 // Sets default values
 AMissile::AMissile()
 {
@@ -73,22 +75,8 @@ void AMissile::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, A
 					{
 						if (DamageEffect)
 						{
-							FGameplayEffectContextHandle Context = OtherAbilitySystemComponent->MakeEffectContext();
-							FVector Location = GetActorLocation();
-
-							Context.AddOrigin(Location);
-						
-							TArray<TWeakObjectPtr<AActor>> ActorList;
-							ActorList.Add(OtherActor);
-							Context.AddActors(ActorList);
-							Context.AddSourceObject(OtherActor);
-							FGameplayEffectSpecHandle DamageEffectSpecHandle = OtherAbilitySystemComponent->MakeOutgoingSpec(DamageEffect, 1.0, Context);
-							SpawnTransform.SetTranslation(GetActorLocation());
-							OtherAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
-							
-							UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FireParticle, SpawnTransform);
-							UGameplayStatics::SpawnSoundAtLocation(GetWorld(), FireSound, GetActorLocation());
-							this->Destroy(); return;
+							Server_ApplyHit(OtherAbilitySystemComponent, OtherActor);
+							//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("I am : %s      Collided with : %s"), *this->GetName(), *OtherActor->GetName()));
 						}
 					}
 				
@@ -98,7 +86,7 @@ void AMissile::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 				
 				SpawnTransform.SetTranslation(GetActorLocation());
-				UGameplayStatics::SpawnSoundAtLocation(GetWorld(), FireSound, SpawnTransform.GetLocation());
+				UGameplayStatics::SpawnSoundAtLocation(GetWorld(), FireSound, SpawnTransform.GetLocation(), FRotator(0.0, 0.0, 0.0), 5.0f,1.0f,0.0f,Attenuation);
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FireParticle, SpawnTransform);
 				this->Destroy(); return;
 			}
@@ -106,6 +94,41 @@ void AMissile::OnCapsuleBeginOverlap(UPrimitiveComponent* OverlappedComponent, A
 	}
 	
 	
+}
+
+void AMissile::Server_ApplyHit_Implementation(UAbilitySystemComponent * OtherAbilitySystemComponent, AActor * OtherActor)
+{
+	FGameplayEffectContextHandle Context = OtherAbilitySystemComponent->MakeEffectContext();
+	FVector Location = GetActorLocation();
+
+	Context.AddOrigin(Location);
+
+	TArray<TWeakObjectPtr<AActor>> ActorList;
+	ActorList.Add(OtherActor);
+	Context.AddActors(ActorList);
+	Context.AddSourceObject(OtherActor);
+	FGameplayEffectSpecHandle DamageEffectSpecHandle = OtherAbilitySystemComponent->MakeOutgoingSpec(DamageEffect, 1.0, Context);
+
+	OtherAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
+	PlayFxEffects(FTransform(Location));
+	CollissionCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetActorHiddenInGame(true);
+	this->Destroy(); return;
+}
+
+bool AMissile::Server_ApplyHit_Validate(UAbilitySystemComponent * OtherAbilitySystemComponent, AActor * OtherActor)
+{
+	return true;
+}
+
+
+void AMissile::PlayFxEffects_Implementation(const FTransform & Location)
+{
+	FTransform Transform(Location);
+	Transform.SetScale3D(FVector(5.0f, 5.0f, 5.0f));
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FireParticle, Transform);
+	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), FireSound, GetActorLocation(), FRotator(0.0, 0.0, 0.0), 5.0f, 1.0f, 0.0f, Attenuation);
+
 }
 
 

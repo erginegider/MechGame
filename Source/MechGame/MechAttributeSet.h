@@ -29,6 +29,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "AbilitySets", ReplicatedUsing = OnRep_Health)
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(UMechAttributeSet, Health)
+
+	UPROPERTY(BlueprintReadOnly, Category = "AbilitySets", ReplicatedUsing = OnRep_MaxHealth)
+	FGameplayAttributeData MaxHealth;
+	ATTRIBUTE_ACCESSORS(UMechAttributeSet, MaxHealth)
 	
 
 	UPROPERTY(BlueprintReadOnly, Category = "AbilitySets", ReplicatedUsing = OnRep_DamageRatio)
@@ -49,6 +53,9 @@ public:
 	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);
 
 	UFUNCTION()
+	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth);
+
+	UFUNCTION()
 	virtual void OnRep_Armor(const FGameplayAttributeData & OldArmor);
 
 	UFUNCTION()
@@ -56,5 +63,6 @@ public:
 
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	virtual void PreAttributeChange(const FGameplayAttribute & Attribute, float & NewValue) override;
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	
 };

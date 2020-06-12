@@ -24,6 +24,9 @@ protected:
 	UFUNCTION()
 	void OnCapsuleBeginOverlap(UPrimitiveComponent * OverlappedComponent, AActor * OtherActor, UPrimitiveComponent * OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
 
+	UFUNCTION(Server,Reliable,WithValidation)
+	void Server_ApplyHit(UAbilitySystemComponent * OtherAbilitySystemComponent, AActor * OtherActor);
+
 	UPROPERTY(VisibleAnywhere, Category = "Projectile")
 	class UProjectileMovementComponent *ProjectileMovementComponent;
 
@@ -40,6 +43,8 @@ public:
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Campfire)
 	UParticleSystem* FireParticle;
 
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Campfire)
+	class USoundAttenuation* Attenuation;
 
 	UPROPERTY(EditAnyWhere, BlueprintReadWrite, Category = Campfire)
 	class USoundCue* FireSound;
@@ -49,6 +54,10 @@ public:
 
 	UPROPERTY(EditAnywhere,Category="Projectile");
 	float DamageToApply;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayFxEffects(const FTransform& Location);
+
 
 
 	// Called every frame

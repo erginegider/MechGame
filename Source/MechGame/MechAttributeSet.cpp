@@ -19,6 +19,7 @@ void UMechAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, Health, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, Armor, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, DamageRatio, COND_None, REPNOTIFY_Always);
 }
@@ -27,6 +28,13 @@ void UMechAttributeSet::OnRep_Health(const FGameplayAttributeData & OldHealth)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, Health, OldHealth);
 }
+
+
+void UMechAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData & OldMaxHealth)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, MaxHealth, OldMaxHealth);
+}
+
 
 void UMechAttributeSet::OnRep_Armor(const FGameplayAttributeData & OldArmor)
 {
@@ -112,15 +120,22 @@ void UMechAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 			}
 
-			UE_LOG(LogTemp, Warning, TEXT("Final Health...: %f   Final Armor.....:%f "), localhealth,localarmor);
-			const float finalhealth = localhealth;
+			
+			float finalhealth = localhealth;
+
+			finalhealth = FMath::Clamp<float>(finalhealth, 0, GetMaxHealth());
+			UE_LOG(LogTemp, Warning, TEXT("Final Health...: %f   Final Armor.....:%f "), finalhealth, localarmor);
 
 			SetHealth(finalhealth);
 			SetArmor(localarmor);
 
-			SourceCharacter->OnPawnHealthChanged.Broadcast(GetHealth());
+			SourceCharacter->OnPawnHealthChanged.Broadcast(finalhealth);
 		}
 	} // If Damage Close ??
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
+	}
 
 
 }
@@ -144,8 +159,8 @@ void UMechAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 					
 					if (OwningCharacter->OnPawnHealthChanged.IsBound())
 					{
-						
-						OwningCharacter->OnPawnHealthChanged.Broadcast(GetHealth());
+						NewValue = FMath::Clamp<float>(NewValue, 0, GetMaxHealth());
+						OwningCharacter->OnPawnHealthChanged.Broadcast(NewValue);
 						
 					}				
 
@@ -168,4 +183,21 @@ void UMechAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	else UE_LOG(LogAbilitySystem, Warning, TEXT("No Owning Character"));	
 	
 	
+}
+
+void UMechAttributeSet::PreAttributeBaseChange(const FGameplayAttribute & Attribute, float & NewValue) const
+{
+	if (Attribute == GetHealthAttribute())
+	{
+
+		//UE_LOG(LogAbilitySystem, Warning, TEXT("%f    %f"), NewValue, GetMaxHealth());
+		//NewValue = FMath::Clamp<float>(NewValue, 0, GetMaxHealth());
+
+			
+
+
+			//OwningCharacter->OnPawnHealthChanged.Broadcast(NewValue);
+
+
+	}
 }
