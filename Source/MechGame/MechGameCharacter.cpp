@@ -23,7 +23,8 @@
 #include "HealthBarUserWidget.h"
 #include "Net/UnrealNetwork.h"
 #include "AIController.h"
-
+#include "Perception/AIPerceptionSystem.h"
+#include "Perception/AISense_Sight.h"
 
 AMechGameCharacter::AMechGameCharacter()
 {
@@ -80,7 +81,8 @@ AMechGameCharacter::AMechGameCharacter()
 	/* ABILITYSYSTEM INITIALIZATION */
 	//////////////////////////////////
 
-	
+	SetGenericTeamId(FGenericTeamId::NoTeam);
+
 	IsBound = false;
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
@@ -90,6 +92,33 @@ AMechGameCharacter::AMechGameCharacter()
 
 	
 }
+
+
+
+ETeamAttitude::Type AMechGameCharacter::GetTeamAttitudeTowards(const AActor & Other) const
+{
+	if (AMechPlayerController * myController = Cast<AMechPlayerController>(Controller))
+	{
+		return myController->GetTeamAttitudeTowards(Other);
+	}
+	else
+		 return ETeamAttitude::Neutral;
+
+}
+
+
+void AMechGameCharacter::SetGenericTeamId(const FGenericTeamId & NewTeamID)
+{
+
+		TeamID = NewTeamID;
+		
+
+		// @todo notify perception system that a controller changed team ID
+	
+	
+}
+
+
 
 void AMechGameCharacter::BeginPlay()
 {
@@ -139,6 +168,8 @@ void AMechGameCharacter::BeginPlay()
 	// Force the component for first replication
 	AbilitySystemComponent->ForceReplication();
 
+
+	UAIPerceptionSystem::RegisterPerceptionStimuliSource(this, UAISense_Sight::StaticClass(), this);
 }
 
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GenericTeamAgentInterface.h"
 #include "MechPlayerController.generated.h"
 
 
@@ -12,9 +13,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnControllerHealthChanged, float, N
  * 
  */
 UCLASS()
-class MECHGAME_API AMechPlayerController : public APlayerController
+class MECHGAME_API AMechPlayerController : public APlayerController, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, Replicated,Category="Team")
+	FGenericTeamId TeamID;
 public:
 
 	UPROPERTY(Replicated,ReplicatedUsing=OnRep_DefaultPawn,BlueprintReadWrite,Category="MyPawnClass")
@@ -22,7 +26,12 @@ public:
 
 	AMechPlayerController();
 
-	
+	ETeamAttitude::Type GetTeamAttitudeTowards(const AActor & Other) const override;
+
+
+
+	virtual void SetGenericTeamId(const FGenericTeamId& NewTeamID) override;
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_Clicked(AMechGameCharacter *selectedpawn);
@@ -54,5 +63,7 @@ public:
 
 	UFUNCTION()
 	virtual void OnUnPossess() override;
+
+	
 
 };

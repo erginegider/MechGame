@@ -27,7 +27,36 @@ AMechPlayerController::AMechPlayerController()
 }
 
 
+ETeamAttitude::Type AMechPlayerController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	if (const APawn *OtherPawn = Cast<APawn>(&Other))
+	{
+		if (const IGenericTeamAgentInterface *TeamAgentInterface = Cast<IGenericTeamAgentInterface>(OtherPawn))
+		{
+			//return Super::GetTeamAttitudeTowards(*OtherPawn->GetController());
+			return ETeamAttitude::Hostile;
+		}
+	}
 
+	return ETeamAttitude::Hostile;
+}
+
+void AMechPlayerController::SetGenericTeamId(const FGenericTeamId & NewTeamID)
+{
+	
+	if (TeamID != NewTeamID)
+	{
+		TeamID = NewTeamID;
+		
+		// @todo notify perception system that a controller changed team ID
+	}
+
+	AMechGameCharacter * myCharacter = Cast<AMechGameCharacter>(GetPawn());
+	if (myCharacter)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 23.0f, FColor::Blue, FString::Printf(TEXT("Character : %s      TeamID  : %i  "),*myCharacter->GetName(), TeamID.GetId()));
+	}
+}
 
 
 void AMechPlayerController::ClientRestart_Implementation(class APawn* NewPawn)
@@ -46,6 +75,8 @@ void AMechPlayerController::ClientRestart_Implementation(class APawn* NewPawn)
 void AMechPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AMechPlayerController, DefaultPawn);
+	DOREPLIFETIME(AMechPlayerController, TeamID);
+	
 }
 
 void AMechPlayerController::Server_Clicked_Implementation(AMechGameCharacter *selectedpawn)
@@ -83,6 +114,7 @@ void AMechPlayerController::BeginPlay()
 		}
 
 	}
+	//SetGenericTeamId(FGenericTeamId(3));
 }
 
 
@@ -91,6 +123,7 @@ TSubclassOf<APawn> AMechPlayerController::GetDefaultPawn()
 	ATestGameMode *MyGameMode = Cast<ATestGameMode>(UGameplayStatics::GetGameMode(GetWorld()));	
 	FString PawnName = this->GetName();
 	int32 index = FCString::Atoi(*PawnName.Right(1));	
+	SetGenericTeamId(FGenericTeamId(uint8(index)));
 	return MyGameMode->SpawnPawnMap[index];
 
 }
@@ -103,7 +136,15 @@ void AMechPlayerController::AcknowledgePossession(APawn * P)
 	if (myCharacter)
 	{
 		myCharacter->GetAbilitySystemComponent()->InitAbilityActorInfo(myCharacter, myCharacter);
-		
+		if (myCharacter->GetGenericTeamId() == FGenericTeamId::NoTeam)
+		{
+			myCharacter->SetGenericTeamId(GetGenericTeamId());
+		}
+		else
+		{
+			SetGenericTeamId(myCharacter->GetGenericTeamId());
+		}
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("%s    : %i  "),*myCharacter->GetName(),GetGenericTeamId().GetId() ));
 	}
 	
 }

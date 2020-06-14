@@ -8,11 +8,13 @@
 AMechGameGameMode::AMechGameGameMode()
 {
 	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPersonCPP/Blueprints/SupportMesh")); 
+
+	
+	/*static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPersonCPP/Blueprints/SupportMesh_C.SupportMesh_C")); 
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
+	}*/
 	bUseSeamlessTravel = true;
 }
 

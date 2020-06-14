@@ -7,14 +7,14 @@
 #include "AbilitySystemInterface.h"
 #include "MechGame.h"
 #include "Ability/FEffectContainer.h"
-
+#include "GenericTeamAgentInterface.h"
 #include "MechGameCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnHealthChanged, float, NewHealth);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPawnArmorChanged, float, NewArmor);
 
 UCLASS(config=Game)
-class AMechGameCharacter : public ACharacter, public IAbilitySystemInterface
+class AMechGameCharacter : public ACharacter, public IAbilitySystemInterface , public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -26,10 +26,21 @@ class AMechGameCharacter : public ACharacter, public IAbilitySystemInterface
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 
-	
-
 public:
 	AMechGameCharacter();
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Team, meta = (AllowPrivateAccess = "true"))
+	FGenericTeamId TeamID;
+
+	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
+	
+
+	//FORCEINLINE virtual  int32 GetTeamId()  { return TeamId; }
+
+	ETeamAttitude::Type GetTeamAttitudeTowards(const AActor & Other) const override;
+
+	void SetGenericTeamId(const FGenericTeamId & NewTeamID) override;
 
 	virtual void BeginPlay() override;
 
