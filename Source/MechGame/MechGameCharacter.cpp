@@ -95,6 +95,11 @@ AMechGameCharacter::AMechGameCharacter()
 
 
 
+FGenericTeamId AMechGameCharacter::GetGenericTeamId() const
+{
+	 return TeamID; 
+}
+
 ETeamAttitude::Type AMechGameCharacter::GetTeamAttitudeTowards(const AActor & Other) const
 {
 	if (AMechPlayerController * myController = Cast<AMechPlayerController>(Controller))
@@ -112,7 +117,7 @@ void AMechGameCharacter::SetGenericTeamId(const FGenericTeamId & NewTeamID)
 
 		TeamID = NewTeamID;
 		
-
+		//UE_LOG(LogTemp, Warning, TEXT("Team ID .. : %s"), TeamID);
 		// @todo notify perception system that a controller changed team ID
 	
 	
@@ -282,7 +287,7 @@ void AMechGameCharacter::ReSetupInput_Implementation()
 	}
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
-	//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("ReSetup Occured..... !! "));
+	
 	FGameplayAbilityInputBinds  bindinfo(FString("ConfirmInput"), FString("CancelInput"), "EMechAbilityInput", static_cast<int32>(EMechAbilityInput::ConfirmInput), static_cast<int32>(EMechAbilityInput::CancelInput));
 	AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, bindinfo);
 }
@@ -353,4 +358,5 @@ void AMechGameCharacter::MoveRight(float Value)
 void AMechGameCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AMechGameCharacter, PlayerHeadHUD);
+	DOREPLIFETIME(AMechGameCharacter, TeamID);
 }

@@ -11,7 +11,7 @@
 #include "Blueprint/UserWidget.h"
 
 
-#define prints(x)  GEngine->AddOnScreenDebugMessage(-1,2.0f,FColor::Green,FString::Printf(TEXT("%s"),x))
+#define prints(x)  GEngine->AddOnScreenDebugMessage(-1,12.0f,FColor::Green,FString::Printf(TEXT("%s"),x))
 #define printn(x)  GEngine->AddOnScreenDebugMessage(-1,2.0f,FColor::Green,FString::Printf(TEXT("%i"),x))
 
 
@@ -29,12 +29,12 @@ AMechPlayerController::AMechPlayerController()
 
 ETeamAttitude::Type AMechPlayerController::GetTeamAttitudeTowards(const AActor& Other) const
 {
-	if (const APawn *OtherPawn = Cast<APawn>(&Other))
+	if (const AMechGameCharacter *OtherPawn = Cast<AMechGameCharacter>(&Other))
 	{
 		if (const IGenericTeamAgentInterface *TeamAgentInterface = Cast<IGenericTeamAgentInterface>(OtherPawn))
 		{
-			//return Super::GetTeamAttitudeTowards(*OtherPawn->GetController());
-			return ETeamAttitude::Hostile;
+				
+		    return FGenericTeamId::GetAttitude(GetGenericTeamId(),OtherPawn->GetGenericTeamId());
 		}
 	}
 
@@ -46,15 +46,14 @@ void AMechPlayerController::SetGenericTeamId(const FGenericTeamId & NewTeamID)
 	
 	if (TeamID != NewTeamID)
 	{
-		TeamID = NewTeamID;
+		TeamID = NewTeamID;		
 		
-		// @todo notify perception system that a controller changed team ID
 	}
 
 	AMechGameCharacter * myCharacter = Cast<AMechGameCharacter>(GetPawn());
 	if (myCharacter)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 23.0f, FColor::Blue, FString::Printf(TEXT("Character : %s      TeamID  : %i  "),*myCharacter->GetName(), TeamID.GetId()));
+		//
 	}
 }
 
@@ -63,11 +62,7 @@ void AMechPlayerController::ClientRestart_Implementation(class APawn* NewPawn)
 {
 	Super::ClientRestart_Implementation(NewPawn);
 	AMechGameCharacter *myPawn = Cast<AMechGameCharacter>(NewPawn);
-	if (myPawn)
-	{
 	
-		myPawn->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
-	}
 }
 
 
@@ -108,22 +103,25 @@ void AMechPlayerController::BeginPlay()
 				if (!PlayerWidget)return;
 				PlayerWidget->AddToViewport();
 				
-				UE_LOG(LogAbilitySystem,Warning,TEXT("I am Alive Controller... "));
+				
 			}
 			
 		}
 
 	}
-	//SetGenericTeamId(FGenericTeamId(3));
+	
 }
 
 
 TSubclassOf<APawn> AMechPlayerController::GetDefaultPawn()
 {
 	ATestGameMode *MyGameMode = Cast<ATestGameMode>(UGameplayStatics::GetGameMode(GetWorld()));	
-	FString PawnName = this->GetName();
-	int32 index = FCString::Atoi(*PawnName.Right(1));	
+
+	FString ControllerName = this->GetName();
+	int32 index = FCString::Atoi(*ControllerName.Right(1));	
+
 	SetGenericTeamId(FGenericTeamId(uint8(index)));
+
 	return MyGameMode->SpawnPawnMap[index];
 
 }
@@ -133,18 +131,12 @@ void AMechPlayerController::AcknowledgePossession(APawn * P)
 	Super::AcknowledgePossession(P);
 	bAutoManageActiveCameraTarget = true;
 	AMechGameCharacter * myCharacter = Cast<AMechGameCharacter>(P);
+	
 	if (myCharacter)
 	{
 		myCharacter->GetAbilitySystemComponent()->InitAbilityActorInfo(myCharacter, myCharacter);
-		if (myCharacter->GetGenericTeamId() == FGenericTeamId::NoTeam)
-		{
-			myCharacter->SetGenericTeamId(GetGenericTeamId());
-		}
-		else
-		{
-			SetGenericTeamId(myCharacter->GetGenericTeamId());
-		}
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("%s    : %i  "),*myCharacter->GetName(),GetGenericTeamId().GetId() ));
+	
+		ServerSetupTeam(myCharacter);
 	}
 	
 }
@@ -156,3 +148,34 @@ void AMechPlayerController::OnUnPossess()
 	Super::OnUnPossess();
 
 }
+
+void AMechPlayerController::ServerSetupTeam_Implementation(AMechGameCharacter * SetPawn)
+{
+
+	AMechGameCharacter * myPawn = SetPawn;
+	if (myPawn)
+	{
+
+		if (myPawn->GetGenericTeamId() == FGenericTeamId::NoTeam)
+		{
+			myPawn->SetGenericTeamId(GetGenericTeamId());
+			
+		}
+		else
+		{
+			SetGenericTeamId(myPawn->GetGenericTeamId());
+			
+		}
+		
+
+
+		myPawn->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
+	}
+}
+
+
+bool AMechPlayerController::ServerSetupTeam_Validate(AMechGameCharacter * SetPawn)
+{
+	return true;
+}
+

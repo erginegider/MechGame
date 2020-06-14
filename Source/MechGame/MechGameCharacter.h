@@ -30,10 +30,10 @@ public:
 	AMechGameCharacter();
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Team, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = Team, meta = (AllowPrivateAccess = "true"))
 	FGenericTeamId TeamID;
 
-	virtual FGenericTeamId GetGenericTeamId() const override { return TeamID; }
+	virtual FGenericTeamId GetGenericTeamId() const override; 
 	
 
 	//FORCEINLINE virtual  int32 GetTeamId()  { return TeamId; }

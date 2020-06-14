@@ -7,7 +7,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "../MechGameCharacter.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "../MechPlayerController.h"
 
 ADroneAIController::ADroneAIController()
 {
@@ -16,18 +16,8 @@ ADroneAIController::ADroneAIController()
 
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
 
-	SightConfig->SightRadius = 2000.0f;
-	SightConfig->LoseSightRadius = 2500.0f;
-	SightConfig->PeripheralVisionAngleDegrees = 360.0f;
-	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 
-	PerceptionComponent->ConfigureSense(*SightConfig);
-	PerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
-
-	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADroneAIController::SenseStuff);
-	SetGenericTeamId(FGenericTeamId(1));
+	BeginPlaying = false;
 
 }
 
@@ -41,7 +31,8 @@ void ADroneAIController::SenseStuff(AActor* Actor, FAIStimulus Stimulus)
 		
 		if (PlayerCharacter && SensedCharacter != PlayerCharacter)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Sense Something"));
+			//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Sense Something"));	
+			
 			UpdateTargetActor(SensedCharacter);
 
 		}
@@ -50,11 +41,18 @@ void ADroneAIController::SenseStuff(AActor* Actor, FAIStimulus Stimulus)
 
 ETeamAttitude::Type ADroneAIController::GetTeamAttitudeTowards(const AActor& Other) const
 {
-	if (const APawn *OtherPawn = Cast<APawn>(&Other))
+	if (const AMechGameCharacter *OtherPawn = Cast<AMechGameCharacter>(&Other))
 	{
 		if (const IGenericTeamAgentInterface *TeamAgentInterface = Cast<IGenericTeamAgentInterface>(OtherPawn))
 		{
-			return Super::GetTeamAttitudeTowards(*OtherPawn->GetController());
+			AMechPlayerController *PlayerController = Cast<AMechPlayerController>(OtherPawn->GetController());
+			if (PlayerController && BeginPlaying)
+			{
+				//GEngine->AddOnScreenDebugMessage(-1, 25.0f, FColor::Red, FString::Printf(TEXT("OtherController Id %d Drone Controller...:%d   Result %d "), PlayerController->GetGenericTeamId().GetId(),GetGenericTeamId().GetId(), (uint8)Super::GetTeamAttitudeTowards(*PlayerController)) );
+				return Super::GetTeamAttitudeTowards(*PlayerController);
+
+			}			
+			
 		}
 	}
 
@@ -66,13 +64,16 @@ void ADroneAIController::BeginPlay()
 	Super::BeginPlay();
 
 	//GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Controller Begin"));
+	
+	
 
 	if (ADronePawn  *myPawn = Cast<ADronePawn>(GetPawn()))
 	{
 		int32 TeamId = myPawn->GetTeamId();
 		SetGenericTeamId(FGenericTeamId(TeamId));
 	}
-	
+	BeginPlaying = true;
+	PerceptionComponent->ForgetAll();
 }
 
 void ADroneAIController::OnPossess(APawn * InPawn)
@@ -83,8 +84,26 @@ void ADroneAIController::OnPossess(APawn * InPawn)
 		SetGenericTeamId(FGenericTeamId(myPawn->GetTeamId()));
 	}
 
+
+	
+	SightConfig->SightRadius = 2000.0f;
+	SightConfig->LoseSightRadius = 2500.0f;
+	SightConfig->PeripheralVisionAngleDegrees = 360.0f;
+	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+	PerceptionComponent->ConfigureSense(*SightConfig);
+	PerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
+
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADroneAIController::SenseStuff);
+	PerceptionComponent->ForgetAll();
 	
 }
+//
+//FGenericTeamId ADroneAIController::GetTeamID()
+//{
+//	return GetGenericTeamId();
+//}
 
 void ADroneAIController::UpdateTargetActor_Implementation(AMechGameCharacter * TargetCharacter) const
 {

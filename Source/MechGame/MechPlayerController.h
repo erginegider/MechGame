@@ -64,6 +64,6 @@ public:
 	UFUNCTION()
 	virtual void OnUnPossess() override;
 
-	
-
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSetupTeam(AMechGameCharacter *SetPawn);
 };

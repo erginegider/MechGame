@@ -25,7 +25,7 @@ public:
 	UFUNCTION()
 	void SenseStuff(AActor* Actor, FAIStimulus Stimulus);
 
-	
+	bool BeginPlaying = false;
 	ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 	
 
@@ -37,4 +37,8 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent,Category = "Callback")
 	void UpdateTargetActor(AMechGameCharacter *TargetCharacter) const;
+
+
+	//UFUNCTION(BlueprintCallable)
+	//int32 GetTeamID();
 };
