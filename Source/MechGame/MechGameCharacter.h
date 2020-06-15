@@ -38,6 +38,8 @@ public:
 
 	//FORCEINLINE virtual  int32 GetTeamId()  { return TeamId; }
 
+
+
 	ETeamAttitude::Type GetTeamAttitudeTowards(const AActor & Other) const override;
 
 	void SetGenericTeamId(const FGenericTeamId & NewTeamID) override;

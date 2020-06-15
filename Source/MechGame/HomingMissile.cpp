@@ -13,13 +13,15 @@ AHomingMissile::AHomingMissile()
 	PrimaryActorTick.bCanEverTick = true;
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
-	MissileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MissileMesh"));
-	MissileMesh->SetupAttachment(RootComponent);
 
 	ProjectileComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("UCapsuleComponent"));
 	CapsuleComponent->SetupAttachment(RootComponent);
+
+	MissileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MissileMesh"));
+	MissileMesh->SetupAttachment(RootComponent);
+
 }
 
 // Called when the game starts or when spawned
