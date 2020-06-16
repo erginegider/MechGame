@@ -22,6 +22,21 @@ AHomingMissile::AHomingMissile()
 	MissileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MissileMesh"));
 	MissileMesh->SetupAttachment(RootComponent);
 
+	CapsuleComponent->SetCapsuleRadius(300.0f);
+	CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel3, ECollisionResponse::ECR_Overlap);
+	CapsuleComponent->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel5);
+	CapsuleComponent->SetGenerateOverlapEvents(true);
+
+	OnActorBeginOverlap.AddDynamic(this, &AHomingMissile::ActorBeginOverlap);
+}
+
+
+void AHomingMissile::ActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+
+	GEngine->AddOnScreenDebugMessage(-1,3.0f,FColor::Purple,TEXT(" This is Pulse"));
 }
 
 // Called when the game starts or when spawned

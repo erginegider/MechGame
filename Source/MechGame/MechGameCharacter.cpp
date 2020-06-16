@@ -231,6 +231,13 @@ void AMechGameCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	}
 }
 
+void AMechGameCharacter::Multicast_SetVisibility_Implementation(bool State)
+{
+	GetMesh()->SetVisibility(State);
+	HealthComponent->SetVisibility(State);
+	//SetActorHiddenInGame(!State);
+}
+
 //When this character is selected in the lobby
 void AMechGameCharacter::Clicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
