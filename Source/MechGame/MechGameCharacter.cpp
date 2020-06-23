@@ -24,7 +24,9 @@
 #include "Net/UnrealNetwork.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionSystem.h"
+#include "EnemyWidget.h"
 #include "Perception/AISense_Sight.h"
+
 
 AMechGameCharacter::AMechGameCharacter()
 {
@@ -65,6 +67,16 @@ AMechGameCharacter::AMechGameCharacter()
 	HealthComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HealthComponent->UpdateWidget();
 	HealthComponent->SetIsReplicated(true);
+
+
+	HealthArmorComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthArmorComponent"));
+	HealthArmorComponent->SetupAttachment(RootComponent);
+	HealthArmorComponent->InitWidget();
+	HealthArmorComponent->SetWidgetSpace(EWidgetSpace::Screen);
+	HealthArmorComponent->SetDrawAtDesiredSize(true);
+	HealthArmorComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HealthArmorComponent->UpdateWidget();
+	HealthArmorComponent->SetIsReplicated(true);
 
 	///////////////////////////////////
 	/* ABILITYSYSTEM INITIALIZATION */
@@ -154,13 +166,41 @@ void AMechGameCharacter::BeginPlay()
 		}		
 	}
 
+	//Fill the MechPlayerController
+	MechPlayerController = Cast<AMechPlayerController>(GetController());
+
+
 	//Get the Widget Instance above the Player...
-	PlayerHeadHUD = Cast<UHealthBarUserWidget>(HealthComponent->GetUserWidgetObject());	
+	PlayerTextHUD = Cast<UHealthBarUserWidget>(HealthComponent->GetUserWidgetObject());	
+
+	PlayerHeadHUD = Cast<UEnemyWidget>(HealthArmorComponent->GetUserWidgetObject());
+	
+	//Bind the widget function to Attributeset's change delegates
+	if (PlayerTextHUD)
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetHealthAttribute()).AddUObject(PlayerTextHUD, &UHealthBarUserWidget::UpdateHealth);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetArmorAttribute()).AddUObject(PlayerTextHUD, &UHealthBarUserWidget::UpdateArmor);
+		if (MechPlayerController&&MechPlayerController->IsLocalPlayerController())
+		{
+			PlayerTextHUD->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+	
+
 
 	//Bind the widget function to Attributeset's change delegates
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetHealthAttribute()).AddUObject(PlayerHeadHUD, &UHealthBarUserWidget::UpdateHealth);
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetArmorAttribute()).AddUObject(PlayerHeadHUD, &UHealthBarUserWidget::UpdateArmor);
+	if (PlayerHeadHUD)
+	{
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetHealthAttribute()).AddUObject(PlayerHeadHUD, &UEnemyWidget::UpdateHealthBar);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetArmorAttribute()).AddUObject(PlayerHeadHUD, &UEnemyWidget::UpdateArmorBar);
+		if (MechPlayerController && MechPlayerController->IsLocalPlayerController())
+		{
+			PlayerHeadHUD->SetVisibility(ESlateVisibility::Hidden);
+			
+		}
 
+	}
+	
 	//We just read from Initial Values form Attribute Set and Fire the AttributeSets Change Broadcast Events
 	InitOnPlayerWidgetDataForBeginPlay();
 
@@ -364,6 +404,6 @@ void AMechGameCharacter::MoveRight(float Value)
 
 void AMechGameCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AMechGameCharacter, PlayerHeadHUD);
+	DOREPLIFETIME(AMechGameCharacter, PlayerTextHUD);
 	DOREPLIFETIME(AMechGameCharacter, TeamID);
 }

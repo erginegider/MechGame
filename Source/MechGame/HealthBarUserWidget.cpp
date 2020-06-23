@@ -16,7 +16,7 @@ void UHealthBarUserWidget::NativeConstruct()
 
 void UHealthBarUserWidget::UpdateHealth(const FOnAttributeChangeData& NewHealth)
 {
-	float NewHealthValue = NewHealth.NewValue;
+	float NewHealthValue = FMath::CeilToFloat(NewHealth.NewValue);
 	FText Health = FText::FromString(FString::SanitizeFloat(NewHealthValue));	
 	
 	HealthBar->SetText(Health);
@@ -25,7 +25,7 @@ void UHealthBarUserWidget::UpdateHealth(const FOnAttributeChangeData& NewHealth)
 void UHealthBarUserWidget::UpdateArmor(const FOnAttributeChangeData & NewArmor)
 {
 
-	float NewArmorValue = NewArmor.NewValue;
+	float NewArmorValue = FMath::CeilToFloat( NewArmor.NewValue);
 	FText Armor = FText::FromString(FString::SanitizeFloat(NewArmorValue));
 
 	ArmorBar->SetText(Armor);

@@ -21,6 +21,8 @@ class MECHGAME_API AMechPlayerController : public APlayerController, public IGen
 	FGenericTeamId TeamID;
 public:
 
+	
+
 	UPROPERTY(Replicated,ReplicatedUsing=OnRep_DefaultPawn,BlueprintReadWrite,Category="MyPawnClass")
 	TSubclassOf<class AMechGameCharacter> DefaultPawn;
 
@@ -53,7 +55,13 @@ public:
 	TSubclassOf<class UUserWidget> PlayerWidgetClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<class UUserWidget> PlayerReticleClass;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	class UUserWidget *PlayerWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UUserWidget *PlayerReticle;
 
 	UFUNCTION()
 	virtual void AcknowledgePossession(class APawn* P) override;

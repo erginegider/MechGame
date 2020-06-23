@@ -52,6 +52,9 @@ public:
 	class UWidgetComponent* HealthComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UWidgetComponent* HealthArmorComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UAbilitySystemComponent* AbilitySystemComponent;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -107,7 +110,10 @@ public:
 protected:
 
 	UPROPERTY(Replicated)
-	class UHealthBarUserWidget *PlayerHeadHUD;
+	class UHealthBarUserWidget *PlayerTextHUD;
+
+	UPROPERTY(Replicated)
+	class UEnemyWidget *PlayerHeadHUD;
 
 	class TSubclassOf<class UUserWidget> HealthWidgetClass;
 	/** Resets HMD orientation in VR. */
@@ -141,6 +147,8 @@ protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
+
+	class AMechPlayerController *MechPlayerController;
 
 public:
 	/** Returns CameraBoom subobject **/

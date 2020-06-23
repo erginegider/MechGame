@@ -21,6 +21,7 @@ void UMechAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, Armor, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, MaxArmor, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UMechAttributeSet, DamageRatio, COND_None, REPNOTIFY_Always);
 }
 
@@ -39,6 +40,12 @@ void UMechAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData & OldMaxHea
 void UMechAttributeSet::OnRep_Armor(const FGameplayAttributeData & OldArmor)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, Armor, OldArmor);
+}
+
+void UMechAttributeSet::OnRep_MaxArmor(const FGameplayAttributeData & OldMaxArmor)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UMechAttributeSet, MaxArmor, OldMaxArmor);
+
 }
 
 

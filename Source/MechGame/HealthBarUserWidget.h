@@ -25,7 +25,7 @@ public:
 
 	virtual void NativeConstruct() override;
 
-	
+
 	void UpdateHealth(const  FOnAttributeChangeData& NewHealth);
 
 	void UpdateArmor(const  FOnAttributeChangeData& NewArmor);

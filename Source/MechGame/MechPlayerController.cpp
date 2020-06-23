@@ -9,6 +9,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystemComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "MechAttributeSet.h"
+#include "HealthArmorUserWidget.h"
 
 
 #define prints(x)  GEngine->AddOnScreenDebugMessage(-1,12.0f,FColor::Green,FString::Printf(TEXT("%s"),x))
@@ -107,8 +109,61 @@ void AMechPlayerController::BeginPlay()
 			}
 			
 		}
+		if (PlayerReticleClass)
+		{
+			if (!PlayerReticle)
+			{
+				PlayerReticle = CreateWidget<UUserWidget>(this, PlayerReticleClass);
+				if (!PlayerReticle)return;
+				PlayerReticle->AddToViewport();
+			}
+
+		}
+
+		AMechGameCharacter *MechGameCharacter = Cast<AMechGameCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		if (MechGameCharacter)
+		{
+			UMechAttributeSet *AttributeSet = MechGameCharacter->MechAttributeSet;
+			FGameplayAttribute HealthAtribute = AttributeSet->GetHealthAttribute();
+			FGameplayAttribute ArmorAtribute = AttributeSet->GetArmorAttribute();
+
+			UAbilitySystemComponent *AbilitySystemComponent = MechGameCharacter->GetAbilitySystemComponent();
+
+			if (AbilitySystemComponent)
+			{
+				UHealthArmorUserWidget *UserWidget = Cast<UHealthArmorUserWidget>(PlayerWidget);
+				if (UserWidget)
+				{
+					FOnAttributeChangeData HealthInitData;
+
+					HealthInitData.NewValue = AttributeSet->GetHealth();
+					
+					AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HealthAtribute).AddUObject(UserWidget, &UHealthArmorUserWidget::UpdateHealthBar);
+
+					AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(HealthAtribute).Broadcast(HealthInitData);
+
+
+
+					FOnAttributeChangeData ArmorInitData;
+
+					ArmorInitData.NewValue = AttributeSet->GetArmor();
+
+					AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(ArmorAtribute).AddUObject(UserWidget, &UHealthArmorUserWidget::UpdateArmorBar);
+
+					AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(ArmorAtribute).Broadcast(ArmorInitData);
+				}
+				
+			}
+
+		}
+		
+		
+
 
 	}
+	
+
+
 	
 }
 

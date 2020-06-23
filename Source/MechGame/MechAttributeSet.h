@@ -45,6 +45,10 @@ public:
 	ATTRIBUTE_ACCESSORS(UMechAttributeSet, Armor)
 
 
+	UPROPERTY(BlueprintReadOnly, Category = "AbilitySets", ReplicatedUsing = OnRep_MaxArmor)
+	FGameplayAttributeData MaxArmor;
+	ATTRIBUTE_ACCESSORS(UMechAttributeSet, MaxArmor)
+
 	UPROPERTY(BlueprintReadOnly, Category = "AbilitySets")
 	FGameplayAttributeData Damage;
 	ATTRIBUTE_ACCESSORS(UMechAttributeSet, Damage)
@@ -57,6 +61,9 @@ public:
 
 	UFUNCTION()
 	virtual void OnRep_Armor(const FGameplayAttributeData & OldArmor);
+
+	UFUNCTION()
+	virtual void OnRep_MaxArmor(const FGameplayAttributeData & OldMaxArmor);
 
 	UFUNCTION()
 	virtual void OnRep_DamageRatio(const FGameplayAttributeData & OldDamageRatio);
