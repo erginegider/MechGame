@@ -112,7 +112,7 @@ void UMechAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			float localarmor = GetArmor();
 
 			SetDamage(0.0f);
-			UE_LOG(LogTemp, Warning, TEXT("Damage RAW...: %f      Damage Ratio......: %f       Damage Final....: %f"),localdamage,GetDamageRatio(),localdamage*GetDamageRatio());
+			//UE_LOG(LogTemp, Warning, TEXT("Damage RAW...: %f      Damage Ratio......: %f       Damage Final....: %f"),localdamage,GetDamageRatio(),localdamage*GetDamageRatio());
 			localdamage = localdamage * GetDamageRatio();
 
 			if (localdamage <= localarmor)
@@ -131,7 +131,7 @@ void UMechAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			float finalhealth = localhealth;
 
 			finalhealth = FMath::Clamp<float>(finalhealth, 0, GetMaxHealth());
-			UE_LOG(LogTemp, Warning, TEXT("Final Health...: %f   Final Armor.....:%f "), finalhealth, localarmor);
+			//UE_LOG(LogTemp, Warning, TEXT("Final Health...: %f   Final Armor.....:%f "), finalhealth, localarmor);
 
 			SetHealth(finalhealth);
 			SetArmor(localarmor);

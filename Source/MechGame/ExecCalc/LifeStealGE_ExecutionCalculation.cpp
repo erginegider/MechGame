@@ -72,5 +72,5 @@ void ULifeStealGE_ExecutionCalculation::Execute_Implementation(const FGameplayEf
 	Info.Attribute = UMechAttributeSet::GetHealthAttribute();
 	SourceAbilitySystemComponent->ApplyGameplayEffectToSelf(HealingEffect, 1.0f, SourceAbilitySystemComponent->MakeEffectContext());
 
-	UE_LOG(LogTemp, Warning, TEXT("ExecCallc Damage....:%f      Health....:%f    SourceActorName.....:%s"), Damage, Health, *(SourceAbilitySystemComponent->AbilityActorInfo->AvatarActor.Get()->GetName()));
+	//UE_LOG(LogTemp, Warning, TEXT("ExecCallc Damage....:%f      Health....:%f    SourceActorName.....:%s"), Damage, Health, *(SourceAbilitySystemComponent->AbilityActorInfo->AvatarActor.Get()->GetName()));
 }

@@ -29,6 +29,13 @@ class AMechGameCharacter : public ACharacter, public IAbilitySystemInterface , p
 public:
 	AMechGameCharacter();
 
+	virtual void Tick(float DeltaTime) override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Parameter Collection")
+	class UMaterialParameterCollection *ParameterCollection;
+
+
+	class UMaterialParameterCollectionInstance *ParameterCollectionInstance;
 
 	UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category = Team, meta = (AllowPrivateAccess = "true"))
 	FGenericTeamId TeamID;
@@ -158,5 +165,7 @@ public:
 
 	UFUNCTION(NetMulticast, BlueprintCallable, reliable)
 	void Multicast_SetVisibility(bool State);
+
+	
 };
 

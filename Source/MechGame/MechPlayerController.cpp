@@ -11,20 +11,43 @@
 #include "Blueprint/UserWidget.h"
 #include "MechAttributeSet.h"
 #include "HealthArmorUserWidget.h"
+#include "MechGameGameMode.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
 
-
+#ifndef prints
 #define prints(x)  GEngine->AddOnScreenDebugMessage(-1,12.0f,FColor::Green,FString::Printf(TEXT("%s"),x))
+#endif
+
+#ifndef printn
 #define printn(x)  GEngine->AddOnScreenDebugMessage(-1,2.0f,FColor::Green,FString::Printf(TEXT("%i"),x))
+#endif
 
 
 
 AMechPlayerController::AMechPlayerController()
 {
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPersonCPP/Blueprints/WarriorMech"));
-	if (PlayerPawnBPClass.Class != NULL)
-	{
-		DefaultPawn = PlayerPawnBPClass.Class;
-	}
+	
+
+	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
+	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
+
+
+	
+
+	SightConfig->SightRadius = 10000.0f;
+	SightConfig->LoseSightRadius = 15000.0f;
+	SightConfig->PeripheralVisionAngleDegrees = 360.0f;
+	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	PerceptionComponent->ConfigureSense(*SightConfig);
+	PerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
+
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AMechPlayerController::SenseStuff);
+	PerceptionComponent->ForgetAll();
+
 	
 }
 
@@ -63,7 +86,7 @@ void AMechPlayerController::SetGenericTeamId(const FGenericTeamId & NewTeamID)
 void AMechPlayerController::ClientRestart_Implementation(class APawn* NewPawn)
 {
 	Super::ClientRestart_Implementation(NewPawn);
-	AMechGameCharacter *myPawn = Cast<AMechGameCharacter>(NewPawn);
+	
 	
 }
 
@@ -71,26 +94,12 @@ void AMechPlayerController::ClientRestart_Implementation(class APawn* NewPawn)
 
 void AMechPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AMechPlayerController, DefaultPawn);
+	
 	DOREPLIFETIME(AMechPlayerController, TeamID);
 	
 }
 
-void AMechPlayerController::Server_Clicked_Implementation(AMechGameCharacter *selectedpawn)
-{
-	DefaultPawn = selectedpawn->GetClass();
-	
-}
 
-bool AMechPlayerController::Server_Clicked_Validate(AMechGameCharacter *selectedpawn)
-{
-	return true;
-}
-
-void AMechPlayerController::OnRep_DefaultPawn()
-{
-	
-}
 
 void AMechPlayerController::BeginPlay()
 {
@@ -119,6 +128,20 @@ void AMechPlayerController::BeginPlay()
 			}
 
 		}
+
+		if (MapWidgetClass)
+		{
+			if (!MapWidget)
+			{
+				MapWidget = CreateWidget<UUserWidget>(this, MapWidgetClass);
+				if (!MapWidget)return;
+				MapWidget->AddToViewport();
+			}
+		}
+
+		
+
+
 
 		AMechGameCharacter *MechGameCharacter = Cast<AMechGameCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 		if (MechGameCharacter)
@@ -168,18 +191,31 @@ void AMechPlayerController::BeginPlay()
 }
 
 
-TSubclassOf<APawn> AMechPlayerController::GetDefaultPawn()
+
+void AMechPlayerController::OnPossess(APawn * InPawn)
 {
-	ATestGameMode *MyGameMode = Cast<ATestGameMode>(UGameplayStatics::GetGameMode(GetWorld()));	
-
-	FString ControllerName = this->GetName();
-	int32 index = FCString::Atoi(*ControllerName.Right(1));	
-
-	SetGenericTeamId(FGenericTeamId(uint8(index)));
-
-	return MyGameMode->SpawnPawnMap[index];
+	Super::OnPossess(InPawn);
+	
 
 }
+
+
+void AMechPlayerController::SenseStuff(AActor* Actor, FAIStimulus Stimulus)
+{
+	
+	if (AMechGameCharacter *SensedCharacter = Cast<AMechGameCharacter>(Actor))
+	{
+		AMechGameCharacter * PlayerCharacter = Cast<AMechGameCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+		if (PlayerCharacter && SensedCharacter != PlayerCharacter)
+		{
+			
+
+		}
+	}
+}
+
+
 
 void AMechPlayerController::AcknowledgePossession(APawn * P)
 {
@@ -221,11 +257,11 @@ void AMechPlayerController::ServerSetupTeam_Implementation(AMechGameCharacter * 
 			SetGenericTeamId(myPawn->GetGenericTeamId());
 			
 		}
-		
-
 
 		myPawn->GetAbilitySystemComponent()->RefreshAbilityActorInfo();
 	}
+
+	
 }
 
 

@@ -19,12 +19,11 @@ void UEnemyWidget::NativeConstruct()
 		MaxHealthAttribute = AttributeSet->GetMaxHealthAttribute();
 		MaxArmorAttribute = AttributeSet->GetMaxArmorAttribute();
 
+
+		EnemyHealthBarProgressBar->SetPercent(MaxHealthAttribute.GetNumericValue(AttributeSet));
+		EnemyArmorBarProgressBar->SetPercent(MaxArmorAttribute.GetNumericValue(AttributeSet));
+
 	}
-
-
-
-	EnemyHealthBarProgressBar->SetPercent(MaxHealthAttribute.GetNumericValue(AttributeSet));
-	EnemyArmorBarProgressBar->SetPercent(MaxArmorAttribute.GetNumericValue(AttributeSet));
 }
 
 
@@ -38,7 +37,7 @@ void UEnemyWidget::UpdateHealthBar(const FOnAttributeChangeData& Value)
 	float NewHealthRatio = Value.NewValue / MaxHealth;
 
 
-	UE_LOG(LogTemp, Warning, TEXT("We have an update : Coming Value: %f      MaxHealth: %f "), Value.NewValue, MaxHealth);
+	
 
 	if (EnemyHealthBarProgressBar)
 	{
@@ -59,13 +58,13 @@ void UEnemyWidget::UpdateArmorBar(const FOnAttributeChangeData& Value)
 	float NewArmorRatio = Value.NewValue / MaxArmor;
 
 
-	UE_LOG(LogTemp, Warning, TEXT("We have an update : Coming Armor Value: %f      MaxArmor: %f "), Value.NewValue, MaxArmor);
+	
 
 
 
 	if (EnemyArmorBarProgressBar)
 	{
-		//ArmorProgressBar
+		
 
 		EnemyArmorBarProgressBar->SetPercent(NewArmorRatio);
 

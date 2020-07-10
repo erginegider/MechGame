@@ -24,8 +24,12 @@
 #include "Net/UnrealNetwork.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionSystem.h"
+#include "LobbyPlayerController.h"
 #include "EnemyWidget.h"
 #include "Perception/AISense_Sight.h"
+#include "MechGameGameMode.h"
+#include "MechGameInstance.h"
+#include "Materials/MaterialParameterCollectionInstance.h"
 
 
 AMechGameCharacter::AMechGameCharacter()
@@ -61,19 +65,19 @@ AMechGameCharacter::AMechGameCharacter()
 
 	HealthComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthComponent"));
 	HealthComponent->SetupAttachment(RootComponent);
-	HealthComponent->InitWidget();
-	HealthComponent->SetWidgetSpace(EWidgetSpace::Screen);
-	HealthComponent->SetDrawAtDesiredSize(true);
-	HealthComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//HealthComponent->InitWidget();
+	HealthComponent->SetWidgetSpace(EWidgetSpace::World);
+	//HealthComponent->SetDrawAtDesiredSize(true);
+	/*HealthComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HealthComponent->UpdateWidget();
-	HealthComponent->SetIsReplicated(true);
-
+	HealthComponent->SetIsReplicated(true);*/
+	
 
 	HealthArmorComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthArmorComponent"));
 	HealthArmorComponent->SetupAttachment(RootComponent);
 	HealthArmorComponent->InitWidget();
 	HealthArmorComponent->SetWidgetSpace(EWidgetSpace::Screen);
-	HealthArmorComponent->SetDrawAtDesiredSize(true);
+	//HealthArmorComponent->SetDrawAtDesiredSize(true);
 	HealthArmorComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HealthArmorComponent->UpdateWidget();
 	HealthArmorComponent->SetIsReplicated(true);
@@ -102,10 +106,28 @@ AMechGameCharacter::AMechGameCharacter()
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 	GetCapsuleComponent()->OnClicked.AddUniqueDynamic(this, &AMechGameCharacter::Clicked);
 
+	SetActorTickEnabled(true);
 	
 }
 
+void AMechGameCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	FVector Location = GetActorLocation();
+	float Temp;
+	if (ParameterCollectionInstance->IsValidLowLevel())
+	{
+		if (ParameterCollectionInstance&& ParameterCollectionInstance->GetScalarParameterValue("X", Temp))
+		{
+			ParameterCollectionInstance->SetScalarParameterValue("X", Location.X);
+			ParameterCollectionInstance->SetScalarParameterValue("Y", Location.Y);
 
+
+		}
+
+	}
+	
+}
 
 FGenericTeamId AMechGameCharacter::GetGenericTeamId() const
 {
@@ -142,6 +164,16 @@ void AMechGameCharacter::BeginPlay()
 	Super::BeginPlay();
 
 
+	if (ParameterCollection)
+	{
+		ParameterCollectionInstance = GetWorld()->GetParameterCollectionInstance(ParameterCollection);
+		if (ParameterCollectionInstance)
+		{
+			ParameterCollectionInstance->SetScalarParameterValue("Dimension", 20000.0f);
+			ParameterCollectionInstance->SetScalarParameterValue("Zoom", 0.5f);
+		}
+
+	}
 	//Init the AbilitySystemComponent for the first time in BeginPlay
 	UAbilitySystemGlobals::Get().InitGlobalData();
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
@@ -186,6 +218,7 @@ void AMechGameCharacter::BeginPlay()
 		}
 	}
 	
+	
 
 
 	//Bind the widget function to Attributeset's change delegates
@@ -193,6 +226,7 @@ void AMechGameCharacter::BeginPlay()
 	{
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetHealthAttribute()).AddUObject(PlayerHeadHUD, &UEnemyWidget::UpdateHealthBar);
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(MechAttributeSet->GetArmorAttribute()).AddUObject(PlayerHeadHUD, &UEnemyWidget::UpdateArmorBar);
+
 		if (MechPlayerController && MechPlayerController->IsLocalPlayerController())
 		{
 			PlayerHeadHUD->SetVisibility(ESlateVisibility::Hidden);
@@ -215,6 +249,10 @@ void AMechGameCharacter::BeginPlay()
 
 
 	UAIPerceptionSystem::RegisterPerceptionStimuliSource(this, UAISense_Sight::StaticClass(), this);
+
+
+	
+
 }
 
 
@@ -271,6 +309,7 @@ void AMechGameCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	}
 }
 
+
 void AMechGameCharacter::Multicast_SetVisibility_Implementation(bool State)
 {
 	GetMesh()->SetVisibility(State);
@@ -282,16 +321,16 @@ void AMechGameCharacter::Multicast_SetVisibility_Implementation(bool State)
 void AMechGameCharacter::Clicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)
 {
 	AMechGameCharacter *MyPawn = Cast<AMechGameCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	AMechPlayerController *MyPlayerController = Cast<AMechPlayerController>(MyPawn->GetController());
-	MyPlayerController->Server_Clicked(this);
-	MyPlayerController->bShowMouseCursor = false;
-	MyPlayerController->bEnableClickEvents = false;
-
-	if (GetLocalRole() == ROLE_Authority)
+	ALobbyPlayerController *MyPlayerController = Cast<ALobbyPlayerController>(MyPawn->GetController());
+	
+	if (MyPlayerController)
 	{
-		GetWorld()->ServerTravel("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap");
-	}
+		MyPlayerController->Server_Clicked(this);
+		MyPlayerController->bShowMouseCursor = true;
+		MyPlayerController->bEnableClickEvents = true;
 
+	}	
+	
 }
 
 UAbilitySystemComponent * AMechGameCharacter::GetAbilitySystemComponent() const

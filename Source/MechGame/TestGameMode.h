@@ -17,17 +17,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnClasses")
 	TMap<int32, TSubclassOf<APawn>> SpawnPawnMap;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnClasses")
-	TArray<FString>  PawnStrings;
+	
 
 	ATestGameMode();
 	
 
 	virtual void BeginPlay();
 
-	UFUNCTION()
-	void UpdatePlayerList();
-
+	
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
